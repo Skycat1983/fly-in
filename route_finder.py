@@ -58,7 +58,17 @@ class RouteFinder:
             print()
             adjacent = []
             for neighbour in self.graph.get_neighbours(name):
-                print(neighbour.metadata)
+                # from here where coul i go next
+                connection = self.graph.get_connection(name, neighbour.name)
+                kind = neighbour.kind
+                if kind == "BLOCKED":
+                    pass
+                cost = 1
+                new_distance = distance + cost
+                print(kind)
+                # print(connection.metadata.)
+                # if i went there from here what would the distance be.
+
 
 
         # current_name = self.graph.get_hub("start").name
