@@ -1,6 +1,7 @@
 import heapq
 from graph import Graph
 from formatting import format_connection, format_hub  # noqa: F401
+from parse import ZoneKind
 
 
 """
@@ -60,12 +61,19 @@ class RouteFinder:
             for neighbour in self.graph.get_neighbours(name):
                 # from here where coul i go next
                 connection = self.graph.get_connection(name, neighbour.name)
-                kind = neighbour.kind
-                if kind == "BLOCKED":
-                    pass
-                cost = 1
-                new_distance = distance + cost
-                print(kind)
+                zone = neighbour.metadata.zone
+                print(zone)
+                step_cost  = 0
+                if zone == ZoneKind.PRIORITY or ZoneKind.NORMAL:
+                    step_cost = 1
+                if zone == ZoneKind.RESTRICTED:
+                    step_cost = 2
+                new_distance = distance + step_cost
+                # if kind == "BLOCKED":
+                #     pass
+                # cost = 1
+                # new_distance = distance + cost
+                # print(kind)
                 # print(connection.metadata.)
                 # if i went there from here what would the distance be.
 
