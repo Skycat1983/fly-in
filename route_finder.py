@@ -64,7 +64,7 @@ class RouteFinder:
                 zone = neighbour.metadata.zone
                 print(zone)
                 step_cost  = 0
-                if zone == ZoneKind.PRIORITY or ZoneKind.NORMAL:
+                if zone in (ZoneKind.PRIORITY, ZoneKind.NORMAL):
                     step_cost = 1
                 if zone == ZoneKind.RESTRICTED:
                     step_cost = 2
