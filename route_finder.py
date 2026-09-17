@@ -56,44 +56,29 @@ class RouteFinder:
 
         while len(priority_queue) > 0:
             distance, name = heapq.heappop(priority_queue)
-            # print()
-            for neighbour in self.graph.get_neighbours(name):
-                # from here where coul i go next
-                # connection = self.graph.get_connection(name, neighbour.name)
-                zone = neighbour.metadata.zone
-                # print(zone)
-                if zone != ZoneKind.BLOCKED:
-                    step_cost = 0
-                    if zone in (ZoneKind.PRIORITY, ZoneKind.NORMAL):
-                        step_cost = 1
-                    if zone == ZoneKind.RESTRICTED:
-                        step_cost = 2
-                    new_distance = distance + step_cost
-                    existing = self.distances[neighbour.name]
-                    if new_distance < existing:
-                        self.distances[neighbour.name] = new_distance
-                        self.previous[neighbour.name] = name
-                        heapq.heappush(priority_queue,
-                                       (new_distance, neighbour.name))
-                        self.visited.add(neighbour.name)
+            if name not in self.visited:
+                self.visited.add(name)
+                if name == "goal":
+                    break
 
-                    # is this better than the existing
-                # if kind == "BLOCKED":
-                #     pass
-                # cost = 1
-                # new_distance = distance + cost
-                # print(kind)
-                # print(connection.metadata.)
-                # if i went there from here what would the distance be.
+                for neighbour in self.graph.get_neighbours(name):
+                    zone = neighbour.metadata.zone
+                    if zone != ZoneKind.BLOCKED:
+                        step_cost = 0
+                        if zone in (ZoneKind.PRIORITY, ZoneKind.NORMAL):
+                            step_cost = 1
+                        if zone == ZoneKind.RESTRICTED:
+                            step_cost = 2
+                        new_distance = distance + step_cost
+                        existing = self.distances[neighbour.name]
+                        if new_distance < existing:
+                            self.distances[neighbour.name] = new_distance
+                            self.previous[neighbour.name] = name
+                            heapq.heappush(priority_queue,
+                                           (new_distance, neighbour.name))
+        print("=========")
+        # prev = self.previous
+        # print(prev)
+        # route = []
+        # for k, v in self.previous:
 
-
-
-        # current_name = self.graph.get_hub("start").name
-        # neighbours = self.graph.get_neighbours(current_name)
-        # for neighbour in neighbours:
-        #     adjacent = neighbour.name
-        #     connection = self.graph.get_connection(current_name, adjacent)
-        #     print(format_connection(connection))
-
-        # print(start)
-    pass
