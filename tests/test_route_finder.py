@@ -57,12 +57,29 @@ def make_map(
 class RouteFinderTests(unittest.TestCase):
     """Verify shortest-path search and start-to-end reconstruction."""
 
+    def test_movement_cost_reflects_each_zone_kind(self) -> None:
+        """Zone costs should be testable independently from graph search."""
+
+        expected_costs = {
+            ZoneKind.NORMAL: 1,
+            ZoneKind.PRIORITY: 1,
+            ZoneKind.RESTRICTED: 2,
+            ZoneKind.BLOCKED: None,
+        }
+
+        for zone, expected in expected_costs.items():
+            with self.subTest(zone=zone):
+                self.assertEqual(
+                    RouteFinder._movement_cost(zone),
+                    expected,
+                )
+
     def test_linear_route_is_returned_from_start_to_end(self) -> None:
         """The bundled linear map should produce a forward route."""
 
         map_data = InputParser(LINEAR_MAP).parse()
 
-        route = RouteFinder(Graph(map_data)).solve()
+        route = RouteFinder(Graph(map_data)).find_shortest_path()
 
         self.assertEqual(
             route,
@@ -79,14 +96,14 @@ class RouteFinderTests(unittest.TestCase):
             end_name="destination",
         )
 
-        route = RouteFinder(Graph(map_data)).solve()
+        route = RouteFinder(Graph(map_data)).find_shortest_path()
 
         self.assertEqual(route, ["origin", "destination"])
 
     def test_disconnected_destination_returns_empty_route(self) -> None:
         """An unreachable end hub should be represented by an empty list."""
 
-        route = RouteFinder(Graph(make_map((), ()))).solve()
+        route = RouteFinder(Graph(make_map((), ()))).find_shortest_path()
 
         self.assertEqual(route, [])
 
@@ -102,7 +119,7 @@ class RouteFinderTests(unittest.TestCase):
             ),
         )
 
-        route = RouteFinder(Graph(map_data)).solve()
+        route = RouteFinder(Graph(map_data)).find_shortest_path()
 
         self.assertEqual(route, [])
 
@@ -123,7 +140,7 @@ class RouteFinderTests(unittest.TestCase):
         )
         finder = RouteFinder(Graph(map_data))
 
-        route = finder.solve()
+        route = finder.find_shortest_path()
 
         self.assertEqual(route, ["start", "restricted", "end"])
         self.assertEqual(finder.distances["restricted"], 2)
@@ -145,7 +162,7 @@ class RouteFinderTests(unittest.TestCase):
         )
 
         routes = [
-            RouteFinder(Graph(map_data)).solve()
+            RouteFinder(Graph(map_data)).find_shortest_path()
             for _ in range(3)
         ]
 

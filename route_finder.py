@@ -24,7 +24,11 @@ and deduce meaning from it?
 
 
 class RouteFinder:
+    """Find least-cost routes through a parsed drone-zone graph."""
+
     def __init__(self, graph: Graph) -> None:
+        """Store the graph and create empty search-state containers."""
+
         self.graph = graph
         self.distances: dict[str, int | float] = {}
         self.previous: dict[str, str | None] = {}
@@ -51,7 +55,24 @@ class RouteFinder:
         heapq.heappush(priority_queue, (0, start_name))
         return priority_queue
 
-    def solve(self) -> list[str]:
+    @staticmethod
+    def _movement_cost(zone: ZoneKind) -> int | None:
+        """Return the entry cost, or ``None`` when the zone is blocked."""
+
+        if zone is ZoneKind.BLOCKED:
+            return None
+        if zone is ZoneKind.RESTRICTED:
+            return 2
+        return 1
+
+    def find_shortest_path(self) -> list[str]:
+        """Return the least-cost route from the start hub to the end hub.
+
+        Returns:
+            Hub names in travel order, including both endpoints. Returns an
+            empty list when no route can reach the end hub.
+        """
+
         priority_queue = self._initialize_search()
         start_name = self.graph.map_data.start_hub.name
         end_name = self.graph.map_data.end_hub.name
@@ -64,20 +85,19 @@ class RouteFinder:
                     break
 
                 for neighbour in self.graph.get_neighbours(name):
-                    zone = neighbour.metadata.zone
-                    if zone != ZoneKind.BLOCKED:
-                        step_cost = 0
-                        if zone in (ZoneKind.PRIORITY, ZoneKind.NORMAL):
-                            step_cost = 1
-                        if zone == ZoneKind.RESTRICTED:
-                            step_cost = 2
-                        new_distance = distance + step_cost
-                        existing = self.distances[neighbour.name]
-                        if new_distance < existing:
-                            self.distances[neighbour.name] = new_distance
-                            self.previous[neighbour.name] = name
-                            heapq.heappush(priority_queue,
-                                           (new_distance, neighbour.name))
+                    step_cost = self._movement_cost(
+                        neighbour.metadata.zone
+                    )
+                    if step_cost is None:
+                        continue
+
+                    new_distance = distance + step_cost
+                    existing = self.distances[neighbour.name]
+                    if new_distance < existing:
+                        self.distances[neighbour.name] = new_distance
+                        self.previous[neighbour.name] = name
+                        heapq.heappush(priority_queue,
+                                       (new_distance, neighbour.name))
         if self.distances[end_name] == float("inf"):
             return []
 
@@ -92,4 +112,5 @@ class RouteFinder:
 
         route.append(start_name)
         route.reverse()
+        # TODO: add exceptions for failure details.
         return route

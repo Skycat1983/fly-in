@@ -2,7 +2,8 @@
 
 ## Current checkpoint: one shortest route works
 
-`RouteFinder.solve()` now returns a route as hub names in travel order:
+`RouteFinder.find_shortest_path()` now returns a route as hub names in travel
+order:
 
 ```text
 start -> ... -> end
@@ -16,19 +17,63 @@ blocked routes, restricted-zone cost, and deterministic equal-cost results.
 Before building more features, be able to explain why `previous` points from a
 hub toward its predecessor and why the reconstructed list must be reversed.
 
+That reasoning is correct. When Dijkstra finds a cheaper way to reach a hub, it
+knows which already-discovered hub it came from, so it can immediately record
+that hub as the predecessor. It cannot yet record the final "next" hub because
+the cheapest continuation toward the destination has not necessarily been
+discovered. The predecessor links therefore form breadcrumbs from the end back
+to the start. Following them produces the route backward, so reconstruction
+reverses the completed list once.
+
 ## Next task: define the boundary around route finding
 
 Keep shortest-path discovery separate from drone simulation and terminal
-output. Think about the contract of `RouteFinder.solve()`:
+output. Think about the contract of `RouteFinder.find_shortest_path()`:
 
 - Is an empty list sufficiently clear for an unreachable destination, or will
   callers need a more descriptive result later?
+  For the current milestone, an empty list is sufficient. The parser requires
+  different start and end hubs, so an empty route cannot also mean "already at
+  the destination." The caller can use `if not path` to detect failure. If the
+  program later needs to explain *why* routing failed, consider a specific
+  exception or a result object containing both the path and failure details.
+  Returning `None` would also be valid, but the return annotation would become
+  `list[str] | None`, and every caller would need to handle that second type.
+  `[]` keeps the interface simpler while failure has only one meaning.
 - Which class should translate hub names into `Hub` objects when metadata is
   needed?
-- Should movement-cost calculation remain inside `solve()`, or would a small,
-  named helper make the rule easier to test and explain?
+  No new class is required yet. Keep the route as `list[str]`; when the future
+  simulator needs zone or capacity metadata, it can ask its `Graph` for each
+  hub with `graph.get_hub(name)`. This keeps route finding independent from
+  simulation state. If those conversions become repetitive, a dedicated
+  `Route` value object may become worthwhile later.
+- Should movement-cost calculation remain inside `find_shortest_path()`, or
+  would a small, named helper make the rule easier to test and explain?
+  A helper would isolate the subject's cost rules from Dijkstra's control flow.
+  One possible interface is:
+
+  ```python
+  def _movement_cost(zone: ZoneKind) -> int | None:
+      """Return the entry cost, or ``None`` when the zone is blocked."""
+  ```
+
+  Then focused tests could check normal, priority, restricted, and blocked
+  zones without constructing an entire graph. Decide whether returning `None`
+  for blocked is clearer than handling blocked zones separately before adopting
+  this design.
 - What docstring should describe the method's return value and unreachable
   behavior?
+  For example:
+
+  ```python
+  def find_shortest_path(self) -> list[str]:
+      """Return the least-cost route from the start hub to the end hub.
+
+      Returns:
+          Hub names in travel order, including both endpoints. Returns an
+          empty list when no route can reach the end hub.
+      """
+  ```
 
 Do not add drone positions, occupancy, or turns to `RouteFinder`. Its result is
 a plan; a simulator will execute that plan over time.
@@ -38,7 +83,10 @@ a plan; a simulator will execute that plan over time.
 Start with normal zones only. Decide what state is required to answer these
 questions on every turn:
 
+<!-- ? is there a reason why we start with normal zones only? -->
+
 - Where is the drone now?
+<!-- ? presumably we are going through the route? so it would be the item we are looking at? -->
 - Which route position is next?
 - Has the drone reached the end?
 - What constitutes one successful move?
@@ -84,7 +132,7 @@ Also check these cases before relying on one shortest route as a foundation:
 - A cheaper route discovered after a more expensive candidate was queued.
 - A blocked hub surrounded by otherwise valid connections.
 - Multiple equal-cost routes inserted in different connection orders.
-- Repeated calls to `solve()` on the same `RouteFinder` instance.
+- Repeated calls to `find_shortest_path()` on the same `RouteFinder` instance.
 - A map whose end hub has a name other than `goal`.
 
 ## Later milestones, in order

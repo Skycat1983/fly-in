@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 from formatting import format_connection, format_hub  # noqa: F401
-from graph import Graph
+from graph import Graph, MapDefinition
 from parse import (
     InputFormatError,
     InputParser,
@@ -27,6 +27,24 @@ from route_finder import RouteFinder
 # • restricted: 2 turns
 # • priority: 1 turn (but should be preferred in pathfinding algorithms)
 # • blocked: Inaccessible — cannot be entered
+
+
+class Simulator:
+    def __init__(self,
+                 map_data: MapDefinition,
+                 graph: Graph,
+                 route_finder: RouteFinder) -> None:
+        self.map_data = map_data
+        self.graph = graph
+        self.route_finder = route_finder
+        self.turn_counter = 0
+        pass
+
+    def traverse(self, path: list[str]) -> None:
+        # for name in path:
+        #     print(name)
+        #     location = graph
+        pass
 
 
 def main() -> int:
@@ -53,18 +71,17 @@ def main() -> int:
     print(f"Drones: {map_data.drone_count}")
     print(f"Start: {map_data.start_hub.name}")
     print(f"End: {map_data.end_hub.name}")
-    # print("\nHubs:")
-    # for hub in map_data.all_hubs:
-    #     print(f"  {format_hub(hub)}")
 
-    # print("\nConnections:")
-    # for connection in map_data.connections:
-    #     print(f"  {format_connection(connection)}")
     print()
 
     graph = Graph(map_data)
     route_finder = RouteFinder(graph)
-    route_finder.solve()
+    shortest_path = route_finder.find_shortest_path()
+    # print("path = ", shortest_path)
+    simulator = Simulator(map_data, graph, route_finder)
+    simulator.traverse(shortest_path)
+# - Is an empty list sufficiently clear for an unreachable destination, or will
+#   callers need a more descriptive result later?
     return 0
 
 
