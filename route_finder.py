@@ -51,14 +51,16 @@ class RouteFinder:
         heapq.heappush(priority_queue, (0, start_name))
         return priority_queue
 
-    def solve(self):
+    def solve(self) -> list[str]:
         priority_queue = self._initialize_search()
+        start_name = self.graph.map_data.start_hub.name
+        end_name = self.graph.map_data.end_hub.name
 
         while len(priority_queue) > 0:
             distance, name = heapq.heappop(priority_queue)
             if name not in self.visited:
                 self.visited.add(name)
-                if name == "goal":
+                if name == end_name:
                     break
 
                 for neighbour in self.graph.get_neighbours(name):
@@ -76,9 +78,18 @@ class RouteFinder:
                             self.previous[neighbour.name] = name
                             heapq.heappush(priority_queue,
                                            (new_distance, neighbour.name))
-        print("=========")
-        # prev = self.previous
-        # print(prev)
-        # route = []
-        # for k, v in self.previous:
+        if self.distances[end_name] == float("inf"):
+            return []
 
+        route: list[str] = []
+        current = end_name
+        while current != start_name:
+            route.append(current)
+            predecessor = self.previous[current]
+            if predecessor is None:
+                return []
+            current = predecessor
+
+        route.append(start_name)
+        route.reverse()
+        return route
