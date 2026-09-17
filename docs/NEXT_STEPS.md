@@ -1,5 +1,110 @@
 # Fly-In: Next Steps
 
+## Current checkpoint: one shortest route works
+
+`RouteFinder.solve()` now returns a route as hub names in travel order:
+
+```text
+start -> ... -> end
+```
+
+The search uses the parsed start and end names rather than assuming they are
+called `start` and `goal`. An unreachable destination returns an empty list.
+Tests cover forward reconstruction, custom endpoint names, disconnected and
+blocked routes, restricted-zone cost, and deterministic equal-cost results.
+
+Before building more features, be able to explain why `previous` points from a
+hub toward its predecessor and why the reconstructed list must be reversed.
+
+## Next task: define the boundary around route finding
+
+Keep shortest-path discovery separate from drone simulation and terminal
+output. Think about the contract of `RouteFinder.solve()`:
+
+- Is an empty list sufficiently clear for an unreachable destination, or will
+  callers need a more descriptive result later?
+- Which class should translate hub names into `Hub` objects when metadata is
+  needed?
+- Should movement-cost calculation remain inside `solve()`, or would a small,
+  named helper make the rule easier to test and explain?
+- What docstring should describe the method's return value and unreachable
+  behavior?
+
+Do not add drone positions, occupancy, or turns to `RouteFinder`. Its result is
+a plan; a simulator will execute that plan over time.
+
+## Then: simulate one drone on one route
+
+Start with normal zones only. Decide what state is required to answer these
+questions on every turn:
+
+- Where is the drone now?
+- Which route position is next?
+- Has the drone reached the end?
+- What constitutes one successful move?
+- Who owns the turn counter?
+- Should a waiting drone produce output? The subject says it should not.
+
+Use the PDF output requirement as the boundary: the simulator should produce
+movement events, while a formatter should turn those events into strings such
+as `D1-waypoint1`. Avoid printing directly from the route finder.
+
+Useful first simulation checks are:
+
+1. One drone traverses the linear map in the expected number of turns.
+2. Exactly one movement is emitted for each normal edge.
+3. The final movement names the actual end hub.
+4. The simulation stops immediately after delivery.
+5. Waiting produces no movement token.
+
+## After normal movement: restricted-zone transit
+
+Entering a restricted zone costs two turns. The PDF distinguishes being in
+flight on a connection from occupying the destination zone. Before coding,
+write down the state transitions for both turns and consider:
+
+- When does the source zone become free?
+- What identifies the occupied connection while the drone is in flight?
+- What should be printed on the transit turn?
+- When is the restricted destination considered occupied?
+- How will the simulator guarantee arrival on the next turn rather than allow
+  extra waiting on the connection?
+
+Test this behavior with one drone before introducing any capacity competition.
+
+## Path-selection questions to revisit
+
+Normal and priority zones both cost one turn, but the subject says priority
+zones should be preferred. The current heap gives equal-distance entries a
+stable order based on hub name. Consider what an explicit priority tie-break
+means and how it can be represented without changing the true movement cost.
+
+Also check these cases before relying on one shortest route as a foundation:
+
+- A cheaper route discovered after a more expensive candidate was queued.
+- A blocked hub surrounded by otherwise valid connections.
+- Multiple equal-cost routes inserted in different connection orders.
+- Repeated calls to `solve()` on the same `RouteFinder` instance.
+- A map whose end hub has a name other than `goal`.
+
+## Later milestones, in order
+
+Only after the one-drone simulator handles normal and restricted movement:
+
+1. Move several drones along one route.
+2. Enforce each hub's `max_drones` capacity.
+3. Enforce each connection's `max_link_capacity`.
+4. Calculate all proposed moves before applying any of them so movement is
+   simultaneous and zones vacated that turn free their capacity correctly.
+5. Add waiting decisions and tests for conflicts.
+6. Find alternative routes and distribute drones between them.
+7. Measure turn counts against the easy-map targets before proceeding to the
+   medium and hard maps.
+
+For each milestone, separate three questions: is the route valid, is the
+turn-by-turn schedule valid, and is the schedule efficient? Solving them all at
+once will make failures difficult to diagnose.
+
 ## What is complete
 
 - `InputParser` turns a map file into a validated `MapDefinition`.
