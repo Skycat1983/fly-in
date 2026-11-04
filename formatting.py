@@ -8,6 +8,12 @@ from functools import singledispatch
 from parse import Connection, Hub
 
 
+def format_movement(drone_id: int, destination: str) -> str:
+    """Format one drone movement as required by the simulation output."""
+
+    return f"D{drone_id}-{destination}"
+
+
 @singledispatch
 def format_value(value: object, indent: int = 0) -> str:
     """Return a human-readable representation of ``value``.

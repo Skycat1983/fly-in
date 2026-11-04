@@ -79,6 +79,7 @@ class RouteFinder:
 
         while len(priority_queue) > 0:
             distance, name = heapq.heappop(priority_queue)
+            # because the same name can be in the heap twice
             if name not in self.visited:
                 self.visited.add(name)
                 if name == end_name:
@@ -93,6 +94,7 @@ class RouteFinder:
 
                     new_distance = distance + step_cost
                     existing = self.distances[neighbour.name]
+                    # if best distance so far
                     if new_distance < existing:
                         self.distances[neighbour.name] = new_distance
                         self.previous[neighbour.name] = name

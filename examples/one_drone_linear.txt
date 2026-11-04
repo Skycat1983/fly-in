@@ -1,0 +1,11 @@
+# One-drone normal route for the first simulator milestone
+nb_drones: 1
+
+start_hub: start 0 0
+hub: waypoint1 1 0
+hub: waypoint2 2 0
+end_hub: goal 3 0
+
+connection: start-waypoint1
+connection: waypoint1-waypoint2
+connection: waypoint2-goal
