@@ -19,6 +19,7 @@ from route_finder import RouteFinder
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LINEAR_MAP = PROJECT_ROOT / "maps" / "easy" / "01_linear_path.txt"
+FORK_MAP = PROJECT_ROOT / "maps" / "easy" / "02_simple_fork.txt"
 
 
 def make_hub(
@@ -170,6 +171,52 @@ class RouteFinderTests(unittest.TestCase):
             routes,
             [["start", "alpha", "end"]] * 3,
         )
+
+    def test_fork_candidates_find_both_branches(self) -> None:
+        """Excluding a best-route link reveals the other fork branch."""
+
+        graph = Graph(InputParser(FORK_MAP).parse())
+        finder = RouteFinder(graph)
+
+        self.assertEqual(
+            finder.find_candidate_paths(),
+            [
+                ["start", "junction", "path_a", "goal"],
+                ["start", "junction", "path_b", "goal"],
+            ],
+        )
+        self.assertEqual(finder.distances["goal"], 3)
+
+    def test_single_route_has_no_alternative_candidate(self) -> None:
+        """A connection whose removal disconnects the map adds no route."""
+
+        graph = Graph(InputParser(LINEAR_MAP).parse())
+
+        self.assertEqual(
+            RouteFinder(graph).find_candidate_paths(),
+            [["start", "waypoint1", "waypoint2", "goal"]],
+        )
+
+    def test_excluding_connection_works_in_both_directions(self) -> None:
+        """Connection exclusion uses the undirected endpoint pair."""
+
+        graph = Graph(InputParser(FORK_MAP).parse())
+        finder = RouteFinder(graph)
+
+        self.assertEqual(
+            finder.find_shortest_path(
+                excluded_connection=frozenset(("path_a", "junction"))
+            ),
+            ["start", "junction", "path_b", "goal"],
+        )
+
+    def test_candidate_limit_must_be_positive(self) -> None:
+        """A zero path limit cannot produce a useful candidate list."""
+
+        graph = Graph(InputParser(FORK_MAP).parse())
+
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            RouteFinder(graph).find_candidate_paths(0)
 
 
 if __name__ == "__main__":

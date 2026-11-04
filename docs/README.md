@@ -1,5 +1,6 @@
 # Fly-in documentation
 
+Read [the execution walkthrough](../meta.md) to refresh how a run works.
 Start with [progress](progress/README.md) to see the current goal. Read the
 [checkpoint log](progress/2026-10-29-restart.md) for the evidence and reasoning
 behind the handoff. The [subject](../fly-in.pdf) is the source of truth for
@@ -22,9 +23,11 @@ requirements; the code and tests show what is actually implemented.
 
 ## Project mental model
 
-`InputParser` reads and validates a map; `Graph` indexes its hubs and
-connections; `RouteFinder` returns a route as hub names; the future simulator
-must turn routes into movements over time. The route is a *plan*, not a schedule.
+`main.py` handles the CLI. `InputParser` reads and validates a map; `Graph`
+indexes its hubs and connections; `RouteFinder` can return a best route or a
+small set of candidates; `FleetPlanner` compares a shared route with a spread
+across those candidates; `simulator.py` schedules drones along the chosen
+routes. A route is a *plan*, not a schedule.
 
 A hub is a graph vertex and a connection is a bidirectional edge. The current
 route cost is the cost of **entering the destination hub**: normal and priority
@@ -47,9 +50,9 @@ routes is not implemented yet.
 
 ## Map guide
 
-Use `examples/one_drone_linear.txt` for the current CLI walkthrough. The ten
-supplied maps remain in `maps/`. Use `maps/easy/01_linear_path.txt` to check
-multiple drones later, then the fork and capacity maps for competing drones.
+`make run` uses the supplied two-drone linear map. Use
+`examples/one_drone_linear.txt` to revisit single-drone movement. The ten
+supplied maps remain in `maps/`; the fork and capacity maps add competition.
 Medium maps add dead ends, loops,
 restricted zones, and priority choices. Hard maps combine these constraints.
 The challenger map is optional.

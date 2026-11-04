@@ -65,8 +65,12 @@ class RouteFinder:
             return 2
         return 1
 
-    def find_shortest_path(self) -> list[str]:
+    def find_shortest_path(
+        self, *, excluded_connection: frozenset[str] | None = None,
+    ) -> list[str]:
         """Return the least-cost route from the start hub to the end hub.
+
+        An optional undirected connection can be excluded from this search.
 
         Returns:
             Hub names in travel order, including both endpoints. Returns an
@@ -86,6 +90,9 @@ class RouteFinder:
                     break
 
                 for neighbour in self.graph.get_neighbours(name):
+                    connection = frozenset((name, neighbour.name))
+                    if connection == excluded_connection:
+                        continue
                     step_cost = self._movement_cost(
                         neighbour.metadata.zone
                     )
@@ -116,3 +123,35 @@ class RouteFinder:
         route.reverse()
         # TODO: add exceptions for failure details.
         return route
+
+    def find_candidate_paths(self, max_paths: int = 3) -> list[list[str]]:
+        """Find the best route and alternatives avoiding one of its links.
+
+        This bounded search does not enumerate every possible route. Each
+        alternative comes from a new Dijkstra search with one connection of
+        the best route excluded.
+        """
+
+        if max_paths < 1:
+            raise ValueError("max_paths must be positive")
+
+        best = self.find_shortest_path()
+        if not best or max_paths == 1:
+            return [best] if best else []
+
+        end_name = self.graph.map_data.end_hub.name
+        alternatives: dict[tuple[str, ...], int | float] = {}
+        for first, second in zip(best, best[1:]):
+            finder = RouteFinder(self.graph)
+            excluded = frozenset((first, second))
+            route = finder.find_shortest_path(
+                excluded_connection=excluded
+            )
+            if route and route != best:
+                alternatives[tuple(route)] = finder.distances[end_name]
+
+        ordered = sorted(
+            alternatives,
+            key=lambda route: (alternatives[route], route),
+        )
+        return [best, *[list(route) for route in ordered[:max_paths - 1]]]

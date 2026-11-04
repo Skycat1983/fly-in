@@ -1,5 +1,5 @@
 PYTHON ?= python3
-MAP ?= examples/one_drone_linear.txt
+MAP ?= maps/easy/01_linear_path.txt
 
 .PHONY: install run debug test lint lint-strict clean
 

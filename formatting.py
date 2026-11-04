@@ -8,10 +8,10 @@ from functools import singledispatch
 from parse import Connection, Hub
 
 
-def format_movement(drone_id: int, destination: str) -> str:
-    """Format one drone movement as required by the simulation output."""
+def format_movement(drone_id: int, location_name: str) -> str:
+    """Format a move to a hub or connection for simulation output."""
 
-    return f"D{drone_id}-{destination}"
+    return f"D{drone_id}-{location_name}"
 
 
 @singledispatch

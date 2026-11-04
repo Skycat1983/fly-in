@@ -1,0 +1,9 @@
+# Shared route with hub and connection capacity of two
+nb_drones: 3
+
+start_hub: start 0 0
+hub: lane 1 0 [max_drones=2]
+end_hub: goal 2 0
+
+connection: start-lane [max_link_capacity=2]
+connection: lane-goal [max_link_capacity=2]

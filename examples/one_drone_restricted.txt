@@ -1,0 +1,9 @@
+# One restricted arrival takes two separate simulation turns
+nb_drones: 1
+
+start_hub: start 0 0
+hub: restricted 1 0 [zone=restricted]
+end_hub: goal 2 0
+
+connection: start-restricted
+connection: restricted-goal

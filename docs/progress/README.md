@@ -1,15 +1,18 @@
 # Progress board
 
-Updated 2026-11-04. See the [restart checkpoint](2026-10-29-restart.md) for
-the earlier route-finding work and the
-[normal-movement checkpoint](2026-11-04-normal-movement.md) for the latest
-implementation.
+Updated 2026-11-04. See the [restart checkpoint](2026-10-29-restart.md),
+[normal-movement checkpoint](2026-11-04-normal-movement.md), and
+[restricted-transit checkpoint](2026-11-04-restricted-transit.md). The recent
+milestones are [shared-route scheduling](2026-11-04-shared-route.md) and
+[manual fork assignment](2026-11-04-manual-fork.md). The latest checkpoint is
+[automatic assignment](2026-11-04-automatic-assignment.md), following
+[candidate-route discovery](2026-11-04-candidate-routes.md).
 
 ## Current goal
 
-Model **one drone entering a restricted zone over two turns**. On the first
-turn, emit the connection name and put the drone in transit. On the next turn,
-emit the destination hub and complete arrival without extra waiting.
+Validate generated schedules independently on the supplied maps, then improve
+route choice where the current two-plan policy leaves avoidable delays. The
+simple fork now completes in four turns through the CLI.
 
 ## Milestones
 
@@ -17,21 +20,27 @@ emit the destination hub and complete arrival without extra waiting.
 - [x] Index hubs and connections in `Graph`.
 - [x] Find one least-cost route with Dijkstra; return `[]` if unreachable.
 - [x] Simulate one drone through normal zones, including CLI movement lines.
-- [ ] Handle one drone entering a restricted zone over two turns.
-- [ ] Move multiple drones, respecting hub and connection capacities and
-      simultaneous moves.
-- [ ] Add waiting and route distribution; check for conflicts and deadlocks.
+- [x] Handle one drone entering a restricted zone over two turns.
+- [x] Move multiple drones along one route.
+- [x] Enforce hub and connection capacities with simultaneous moves.
+- [x] Wait on capacity conflicts and report a turn with no possible move.
+- [x] Schedule manually assigned routes on the simple fork in four turns.
+- [x] Discover alternative route candidates on the simple fork.
+- [x] Assign drones to candidate routes automatically with a two-plan trial.
+- [ ] Independently validate generated schedules on supplied maps.
 - [ ] Prefer priority zones among suitable equal-cost routes.
-- [ ] Complete restricted-movement output and colored visual feedback.
+- [ ] Add colored visual feedback.
 - [ ] Compare turn counts with the supplied map targets.
 - [ ] Complete submission README, parser edge cases, docstrings, and lint.
 
 ## Open decisions
 
-- Decide how to represent a drone in transit so arrival on the next turn is
-  mandatory and destination capacity is reserved in time.
-- Decide how route distribution will use the simulator once multiple drones
-  are supported. The current simulator rejects maps with more than one drone.
+- Check whether excluding one best-route connection finds enough candidates
+  on harder maps; it does not enumerate all alternatives.
+- Decide how to improve assignment beyond a shared plan and one round-robin
+  spread, especially where routes share bottlenecks.
+- Decide whether a future multi-route scheduler needs a more general move
+  selector than the current one-route, furthest-first order.
 
 ## Logging rule
 
